@@ -416,8 +416,45 @@ function wirePhoneUI() {
     }
   })
 
-  document.addEventListener('change', (e) => {
+  document.addEventListener('change', async (e) => {
     const el = e.target as HTMLInputElement
+    if (el.id === 'doc-file-input') {
+      const file = el.files?.[0]
+      if (!file) return
+      const nameInput = document.getElementById('doc-name-input') as HTMLInputElement
+      const textInput = document.getElementById('doc-text-input') as HTMLTextAreaElement
+      const errEl = document.getElementById('doc-import-error')!
+      nameInput.value = file.name.replace(/\.[^.]+$/, '')
+      errEl.style.display = 'none'
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        textInput.value = 'Extracting PDF text…'
+        try {
+          const { extractPdfText } = await import('./utils/pdf.ts')
+          const extracted = await extractPdfText(file)
+          if (extracted.trim().length < 20) {
+            textInput.value = ''
+            errEl.textContent = 'No text found in this PDF — it may be a scanned image. Try copying the text manually and pasting it below.'
+            errEl.style.display = 'block'
+          } else {
+            textInput.value = extracted
+          }
+        } catch (e) {
+          console.error('[PDF] extraction error:', e)
+          textInput.value = ''
+          errEl.textContent = `PDF error: ${e instanceof Error ? e.message : String(e)}`
+          errEl.style.display = 'block'
+        }
+      } else {
+        const reader = new FileReader()
+        reader.onload = () => { textInput.value = reader.result as string }
+        reader.onerror = () => {
+          errEl.textContent = 'Could not read file. Try a different format or paste the text.'
+          errEl.style.display = 'block'
+        }
+        reader.readAsText(file)
+      }
+      return
+    }
     if (el.id === 'cue-manual-only') {
       const freqInput = document.getElementById('cue-freq') as HTMLInputElement | null
       const freqLabel = document.getElementById('cue-freq-label')
@@ -515,6 +552,7 @@ function closeDocImportModal() {
   document.getElementById('doc-import-modal')!.classList.remove('open')
   ;(document.getElementById('doc-name-input') as HTMLInputElement).value = ''
   ;(document.getElementById('doc-text-input') as HTMLTextAreaElement).value = ''
+  ;(document.getElementById('doc-file-input') as HTMLInputElement).value = ''
 }
 
 async function confirmDocImport() {
@@ -537,7 +575,11 @@ async function confirmDocImport() {
 
   closeDocImportModal()
   await refreshContextDocs()
-  showToast('Document added')
+  if (text.length > 10000) {
+    showToast('Document added — only the first ~10,000 characters will be used as context')
+  } else {
+    showToast('Document added')
+  }
 }
 
 function restoreDefaultPrompt() {

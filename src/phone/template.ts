@@ -336,8 +336,13 @@ export function renderPhoneHTML(): void {
     <div class="doc-import-modal" id="doc-import-modal">
       <div class="doc-import-sheet">
         <p class="modal-title">Add Context Document</p>
-        <input class="modal-input" id="doc-name-input" placeholder="Document name" />
-        <textarea class="modal-input" id="doc-text-input" rows="6" placeholder="Paste document text here…"></textarea>
+        <label class="file-pick-btn" id="doc-file-label">
+          <input type="file" id="doc-file-input" accept=".txt,.md,.csv,.json,.rtf,.pdf,text/plain,text/markdown,application/pdf" style="display:none" />
+          📄 Choose file
+        </label>
+        <p class="modal-size-hint" style="margin-top:4px">Supported: .pdf, .txt, .md, .csv, .json — or paste text below</p>
+        <input class="modal-input" id="doc-name-input" placeholder="Document name" style="margin-top:8px" />
+        <textarea class="modal-input" id="doc-text-input" rows="5" placeholder="Paste document text here…"></textarea>
         <p class="modal-size-hint">Max 5 MB per document. Up to 5 documents total.</p>
         <div class="modal-actions">
           <button class="modal-cancel" id="doc-cancel-btn">Cancel</button>
