@@ -136,21 +136,27 @@ function wireGlassesInput() {
       return
     }
 
+    // Lifecycle events arrive as sysEvent — handle and return early only for those
     const sys = event.sysEvent
     if (sys) {
       switch (sys.eventType) {
-        case OsEventTypeList.FOREGROUND_EXIT_EVENT: await onBackground(); break
-        case OsEventTypeList.FOREGROUND_ENTER_EVENT: await onForeground(); break
-        case OsEventTypeList.ABNORMAL_EXIT_EVENT: await onExit(); break
-        case OsEventTypeList.SYSTEM_EXIT_EVENT: await onExit(); break
+        case OsEventTypeList.FOREGROUND_EXIT_EVENT: await onBackground(); return
+        case OsEventTypeList.FOREGROUND_ENTER_EVENT: await onForeground(); return
+        case OsEventTypeList.ABNORMAL_EXIT_EVENT: await onExit(); return
+        case OsEventTypeList.SYSTEM_EXIT_EVENT: await onExit(); return
+        case OsEventTypeList.IMU_DATA_REPORT: return
       }
-      return
+      // Touch events can also arrive as sysEvent (carries eventSource field) — fall through
     }
 
-    const textEvent = event.textEvent
-    if (!textEvent) return
-    // Normalize eventType — can arrive as string or number from JSON bridge
-    const type = OsEventTypeList.fromJson(textEvent.eventType)
+    // Prefer textEvent, fall back to listEvent, then sysEvent for touch
+    const rawType = event.textEvent?.eventType
+      ?? event.listEvent?.eventType
+      ?? event.sysEvent?.eventType
+
+    const type = OsEventTypeList.fromJson(rawType)
+    console.log('[input]', 'view:', glassesView, 'raw:', rawType, 'type:', type,
+      'text:', !!event.textEvent, 'list:', !!event.listEvent, 'sys:', !!event.sysEvent)
 
     if (glassesView === 'home') await handleHomeInput(type)
     else if (glassesView === 'active-session') await handleSessionInput(type)
@@ -162,12 +168,11 @@ async function handleHomeInput(type: OsEventTypeList | undefined) {
   switch (type) {
     case OsEventTypeList.SCROLL_TOP_EVENT: homeSelectUp(); break
     case OsEventTypeList.SCROLL_BOTTOM_EVENT: homeSelectDown(); break
-    case OsEventTypeList.CLICK_EVENT: {
-      const idx = getSelectedIndex()
-      if (idx === 0) await beginSession()
-      else if (idx === 1) switchPhoneTab('ask')
+    case OsEventTypeList.CLICK_EVENT:
+    case undefined:
+      // CLICK_EVENT = 0 can arrive as undefined after JSON bridge normalization
+      await beginSession()
       break
-    }
     case OsEventTypeList.DOUBLE_CLICK_EVENT:
       bridge.shutDownPageContainer(1)
       break
@@ -176,16 +181,15 @@ async function handleHomeInput(type: OsEventTypeList | undefined) {
 
 async function handleSessionInput(type: OsEventTypeList | undefined) {
   switch (type) {
-    case OsEventTypeList.SCROLL_TOP_EVENT:
     case OsEventTypeList.CLICK_EVENT:
+    case undefined:
+      // CLICK_EVENT = 0 can arrive as undefined after JSON bridge normalization
       await triggerManualCue()
       break
-    case OsEventTypeList.SCROLL_BOTTOM_EVENT:
+    case OsEventTypeList.DOUBLE_CLICK_EVENT:
       await endSession()
       break
-    case OsEventTypeList.DOUBLE_CLICK_EVENT:
-      await triggerGlassesAsk()
-      break
+    // SCROLL_TOP/BOTTOM reserved for future transcript navigation — no-op during session
   }
 }
 
@@ -194,8 +198,9 @@ function handleCueInput(type: OsEventTypeList | undefined) {
     case OsEventTypeList.SCROLL_TOP_EVENT: cueNavigatePrev(); break
     case OsEventTypeList.SCROLL_BOTTOM_EVENT: cueNavigateNext(); break
     case OsEventTypeList.CLICK_EVENT:
+    case undefined:
     case OsEventTypeList.DOUBLE_CLICK_EVENT:
-      dismissCueOverlay()  // onDismiss callback handles view transition
+      dismissCueOverlay()
       break
   }
 }
@@ -266,7 +271,8 @@ async function endSession() {
 
   if (sessionTimerInterval) { clearInterval(sessionTimerInterval); sessionTimerInterval = null }
 
-  const saved = await stopSession()
+  let saved = null
+  try { saved = await stopSession() } catch (e) { console.error('[endSession] stopSession error:', e) }
 
   document.getElementById('session-idle')!.style.display = 'block'
   document.getElementById('session-active')!.style.display = 'none'
@@ -276,8 +282,8 @@ async function endSession() {
   activeContextText = ''
   activeContextName = ''
 
-  rebuildHomeScreen()
   glassesView = 'home'
+  try { await rebuildHomeScreen() } catch (e) { console.error('[endSession] rebuildHomeScreen error:', e) }
   await refreshSessionsList()
 
   if (saved) {
@@ -336,29 +342,13 @@ async function deliverCue(snippet: string) {
 async function triggerManualCue() {
   if (!settings.keys.anthropicKey) return
   const snippet = phoneTranscript.slice(-800)
+  if (snippet.trim().length < 20) {
+    showToast('Not enough transcript yet — keep talking')
+    return
+  }
   await deliverCue(snippet)
 }
 
-async function triggerGlassesAsk() {
-  bridge.textContainerUpgrade(new TextContainerUpgrade({ containerID: 2, containerName: 'transcript', content: 'Ask Claude: speak your question…\n(10s capture)', contentOffset: 0, contentLength: 47 }))
-  await new Promise(r => setTimeout(r, 10_000))
-  const question = phoneTranscript.split('\n').filter(Boolean).slice(-4).join(' ')
-  if (!question.trim()) return
-
-  const answer = await askClaude(question, phoneTranscript)
-  const cue: Cue = { id: generateId(), type: 'answer', text: answer.slice(0, 250), timestamp: Date.now(), starred: false, usedWebSearch: false }
-  addCueToSession(cue)
-  incrementCueCount()
-
-  if (settings.display.cuesOnGlasses) {
-    showCueOverlay(cue, settings.cues.hold, () => {
-      glassesView = 'active-session'
-      renderSessionScreen()
-    })
-    glassesView = 'cue-overlay'
-  }
-  document.getElementById('ask-response')!.textContent = answer
-}
 
 // ── Phone UI ──────────────────────────────────────────────────────────────────
 

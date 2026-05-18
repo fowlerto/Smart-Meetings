@@ -108,7 +108,6 @@ function renderCueOverlay() {
     currentCueIndex > 0 ? '▲ prev' : '      ',
     currentCueIndex < cueQueue.length - 1 ? '▼ next' : '      ',
     '● dismiss',
-    '○ star',
   ]
   const cueNav = new TextContainerProperty({
     xPosition: 0, yPosition: 216, width: 576, height: 35,

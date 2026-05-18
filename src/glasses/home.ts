@@ -11,7 +11,6 @@ export function initHomeScreen(b: EvenAppBridge) {
 // Simplified: browse sessions, context docs, and settings are phone-only.
 const MENU_ITEMS = [
   'Start new session',
-  'Ask Claude',
 ]
 
 let selectedIndex = 0
@@ -44,7 +43,7 @@ function makeContainers(menuText: string) {
     xPosition: 0, yPosition: 251, width: 576, height: 37,
     borderWidth: 1, borderColor: 3, paddingLength: 4,
     containerID: 3, containerName: 'nav-hint',
-    content: '▲▼ navigate  ● select  hold = exit', isEventCapture: 0,
+    content: '● start session  ○○ exit', isEventCapture: 0,
   })
 
   return [hud, menu, navHint]
@@ -58,9 +57,10 @@ export async function renderHomeScreen(): Promise<void> {
   )
 }
 
-export function rebuildHomeScreen(): void {
+export async function rebuildHomeScreen(): Promise<void> {
   const [hud, menu, navHint] = makeContainers(buildMenuText())
-  bridge.rebuildPageContainer(new RebuildPageContainer({ containerTotalNum: 3, textObject: [hud, menu, navHint] }))
+  const ok = await bridge.rebuildPageContainer(new RebuildPageContainer({ containerTotalNum: 3, textObject: [hud, menu, navHint] }))
+  console.log('[rebuildHomeScreen] result:', ok)
 }
 
 export function homeSelectUp(): boolean {

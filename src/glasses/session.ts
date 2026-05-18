@@ -92,7 +92,7 @@ export function renderSessionScreen(): void {
     xPosition: 0, yPosition: 207, width: 576, height: 37,
     borderWidth: 1, borderColor: 3, paddingLength: 4,
     containerID: 3, containerName: 'nav-hint',
-    content: '▲● cue  ▼ end  ○ ask', isEventCapture: 0,
+    content: '● cue  ○○ end session', isEventCapture: 0,
   })
 
   const statusBar = new TextContainerProperty({

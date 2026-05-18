@@ -252,7 +252,7 @@ export function renderPhoneHTML(): void {
             &nbsp;• High: only fires on direct questions being asked or named individuals</p>
           <p style="color:var(--text-dim);margin-bottom:4px"><strong>Auto Pop-up on Glasses</strong> — Cues appear automatically on the glasses display. When off, the status bar shows [CUE READY] and you tap to view.</p>
           <p style="color:var(--text-dim);margin-bottom:4px"><strong>Auto cues</strong> — Every Frequency seconds, if at least a sentence has been spoken, the filter model checks whether a cue is needed. If yes, the summary model generates it and it appears on glasses and phone.</p>
-          <p style="color:var(--text-dim);margin-bottom:12px"><strong>Manual cues</strong> — Trigger any time: swipe ▲ or tap ● on the glasses, or press the Cue button on the phone. Uses the last ~800 characters of transcript.</p>
+          <p style="color:var(--text-dim);margin-bottom:12px"><strong>Manual cues</strong> — Trigger any time: tap ● on the glasses, or press the Cue button on the phone. Uses the last ~800 characters of transcript.</p>
 
           <p class="settings-label">SETTINGS: DISPLAY</p>
           <p style="color:var(--text-dim);margin-bottom:4px"><strong>Live Transcription on Glasses</strong> — Streams transcript text to the glasses display in real time during a session.</p>
@@ -293,9 +293,16 @@ export function renderPhoneHTML(): void {
           <p style="color:var(--text-dim);margin-bottom:12px"><strong>Settings</strong> — All configuration. Keys, models, cue behavior, display toggles, export prompt, summary options, and this help screen.</p>
 
           <p class="settings-label">GLASSES GESTURES</p>
-          <p style="color:var(--text-dim);margin-bottom:4px">▲ swipe up or ● tap — Trigger manual cue</p>
-          <p style="color:var(--text-dim);margin-bottom:4px">▼ swipe down — End session and return to home</p>
-          <p style="color:var(--text-dim);margin-bottom:12px">○ double-tap — Ask Claude (captures next 10 seconds of speech as your question)</p>
+          <p style="color:var(--text-dim);margin-bottom:8px"><strong>Home screen</strong></p>
+          <p style="color:var(--text-dim);margin-bottom:4px">● press — Start new session</p>
+          <p style="color:var(--text-dim);margin-bottom:12px">○○ double-press — Exit app (shows confirmation)</p>
+          <p style="color:var(--text-dim);margin-bottom:8px"><strong>During a session</strong></p>
+          <p style="color:var(--text-dim);margin-bottom:4px">● press — Trigger a manual cue</p>
+          <p style="color:var(--text-dim);margin-bottom:12px">○○ double-press — End session and return to home</p>
+          <p style="color:var(--text-dim);margin-bottom:8px"><strong>Viewing a cue</strong></p>
+          <p style="color:var(--text-dim);margin-bottom:4px">▲ swipe up / ▼ swipe down — Navigate between cue pages</p>
+          <p style="color:var(--text-dim);margin-bottom:12px">● press or ○○ double-press — Dismiss cue</p>
+          <p style="color:var(--text-dim);margin-bottom:12px">Ask Claude is phone-only — use the Ask tab or the ? button during an active session.</p>
 
         </div>
       </div>
