@@ -22,6 +22,7 @@ export function renderSettings(settings: Settings): void {
   setToggle('disp-cues', settings.display.cuesOnGlasses)
   setToggle('disp-time', settings.display.timeInHud)
   setToggle('disp-context', settings.display.contextInHud)
+  setToggle('audio-phone-mic', settings.audio?.usePhoneMic ?? false)
 
   setToggle('sum-actions', settings.summary.extractActionItems)
   setRadio('sum-detail', settings.summary.summaryDetail)
@@ -62,6 +63,9 @@ export function collectSettings(current: Settings): Settings {
     },
     prompts: {
       sharePrompt: getTextareaValue('share-prompt') ?? current.prompts.sharePrompt,
+    },
+    audio: {
+      usePhoneMic: getToggleValue('audio-phone-mic') ?? current.audio?.usePhoneMic ?? false,
     },
     activeDocId: current.activeDocId,
   }

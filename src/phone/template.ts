@@ -197,6 +197,10 @@ export function renderPhoneHTML(): void {
               <div class="settings-label">${label}</div>
               <label class="toggle"><input type="checkbox" id="${id}" checked /><span class="toggle-slider"></span></label>
             </div>`).join('')}
+          <div class="settings-row">
+            <div><div class="settings-label">USE PHONE MICROPHONE</div><div class="settings-desc">Better room audio — captures ambient sound vs. G2 mic (optimized for your voice only)</div></div>
+            <label class="toggle"><input type="checkbox" id="audio-phone-mic" /><span class="toggle-slider"></span></label>
+          </div>
           <button class="save-settings-btn" id="save-settings-display-btn">Save Settings</button>
         </div>
 
@@ -261,7 +265,7 @@ export function renderPhoneHTML(): void {
           <p style="color:var(--text-dim);margin-bottom:12px"><strong>Context Name in HUD</strong> — Shows the name of the selected context document in the top bar during a session.</p>
 
           <p class="settings-label">SETTINGS: PROMPTS</p>
-          <p style="color:var(--text-dim);margin-bottom:12px">The AI Export Prompt is appended to session exports when you check the AI Prompt option in the Export / Share section. Paste the full export into any AI assistant to receive a structured analysis. The default prompt instructs the AI to incorporate cues into the summary and tag cue-influenced points with * and [cue type]. Edit the prompt to match your preferred output style, or tap Restore Default to reset it.</p>
+          <p style="color:var(--text-dim);margin-bottom:12px">The AI Export Prompt is placed at the top of session exports when you check the AI Prompt option in the Export / Share section. Paste the full export into any AI assistant to receive a structured analysis. The default prompt instructs the AI to incorporate cues into the summary and tag cue-influenced points with * and [cue type]. Edit the prompt to match your preferred output style, or tap Restore Default to reset it.</p>
 
           <p class="settings-label">SETTINGS: SUMMARY</p>
           <p style="color:var(--text-dim);margin-bottom:4px"><strong>Extract Action Items</strong> — When generating a summary, the AI identifies tasks and owners mentioned during the meeting and lists them as a separate section.</p>

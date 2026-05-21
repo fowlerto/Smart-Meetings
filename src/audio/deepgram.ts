@@ -10,6 +10,12 @@ let reconnectAttempts = 0
 let running = false
 let onStatusChange: ((status: string) => void) | null = null
 
+// Phone mic state
+let phoneMicStream: MediaStream | null = null
+let phoneMicCtx: AudioContext | null = null
+let phoneMicNode: ScriptProcessorNode | null = null
+let phoneMicSampleRate = 16000
+
 const MAX_RECONNECT = 3
 const RECONNECT_DELAY_MS = 2000
 
@@ -25,17 +31,18 @@ export function onDeepgramStatus(cb: (status: string) => void) {
   onStatusChange = cb
 }
 
-function buildWsUrl(): string {
-  // encoding + sample_rate are required for raw PCM (G2 mic: 16kHz signed 16-bit LE mono)
-  return `wss://api.deepgram.com/v1/listen?model=nova-3&encoding=linear16&sample_rate=16000&channels=1&smart_format=true&punctuate=true`
+function buildWsUrl(sampleRate = 16000): string {
+  return `wss://api.deepgram.com/v1/listen?model=nova-3&encoding=linear16&sample_rate=${sampleRate}&channels=1&smart_format=true&punctuate=true`
 }
+
+// ── Glasses mic (G2 hardware) ──────────────────────────────────────────────────
 
 export async function startStreaming(transcriptCb: TranscriptCallback): Promise<void> {
   onTranscript = transcriptCb
   running = true
   reconnectAttempts = 0
   try { await bridge.audioControl(true) } catch { /* simulator may not support audioControl */ }
-  openWebSocket()
+  openWebSocket(16000)
 }
 
 export async function stopStreaming(): Promise<void> {
@@ -44,8 +51,51 @@ export async function stopStreaming(): Promise<void> {
   closeWebSocket()
 }
 
-function openWebSocket() {
-  ws = new WebSocket(buildWsUrl(), ['token', apiKey])
+// ── Phone mic (getUserMedia) ───────────────────────────────────────────────────
+
+export async function startPhoneMicStreaming(transcriptCb: TranscriptCallback): Promise<void> {
+  onTranscript = transcriptCb
+  running = true
+  reconnectAttempts = 0
+
+  try {
+    phoneMicStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    phoneMicCtx = new AudioContext()
+    phoneMicSampleRate = phoneMicCtx.sampleRate
+    const source = phoneMicCtx.createMediaStreamSource(phoneMicStream)
+    // ScriptProcessorNode is deprecated but broadly supported in embedded WebViews
+    phoneMicNode = phoneMicCtx.createScriptProcessor(4096, 1, 1)
+    phoneMicNode.onaudioprocess = (e) => {
+      const float32 = e.inputBuffer.getChannelData(0)
+      const int16 = new Int16Array(float32.length)
+      for (let i = 0; i < float32.length; i++) {
+        int16[i] = Math.max(-32768, Math.min(32767, Math.round(float32[i] * 32767)))
+      }
+      sendAudioData(new Uint8Array(int16.buffer))
+    }
+    source.connect(phoneMicNode)
+    phoneMicNode.connect(phoneMicCtx.destination)
+  } catch {
+    onStatusChange?.('mic-denied')
+    running = false
+    return
+  }
+
+  openWebSocket(phoneMicSampleRate)
+}
+
+export async function stopPhoneMicStreaming(): Promise<void> {
+  running = false
+  if (phoneMicNode) { phoneMicNode.disconnect(); phoneMicNode = null }
+  if (phoneMicCtx) { await phoneMicCtx.close(); phoneMicCtx = null }
+  if (phoneMicStream) { phoneMicStream.getTracks().forEach(t => t.stop()); phoneMicStream = null }
+  closeWebSocket()
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+
+function openWebSocket(sampleRate: number) {
+  ws = new WebSocket(buildWsUrl(sampleRate), ['token', apiKey])
   ws.binaryType = 'arraybuffer'
 
   ws.onopen = () => {
@@ -73,7 +123,7 @@ function openWebSocket() {
     if (reconnectAttempts < MAX_RECONNECT) {
       reconnectAttempts++
       onStatusChange?.('reconnecting…')
-      setTimeout(openWebSocket, RECONNECT_DELAY_MS)
+      setTimeout(() => openWebSocket(sampleRate), RECONNECT_DELAY_MS)
     } else {
       onStatusChange?.('failed')
       running = false

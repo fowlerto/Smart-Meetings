@@ -27,13 +27,14 @@ async function set(key: string, value: unknown): Promise<void> {
 
 // Settings
 export async function loadSettings(): Promise<Settings> {
-  const [keys, models, cues, display, summary, prompts, activeDocId] = await Promise.all([
+  const [keys, models, cues, display, summary, prompts, audio, activeDocId] = await Promise.all([
     get<Settings['keys']>('settings:keys'),
     get<Settings['models']>('settings:models'),
     get<Settings['cues']>('settings:cues'),
     get<Settings['display']>('settings:display'),
     get<Settings['summary']>('settings:summary'),
     get<Settings['prompts']>('settings:prompts'),
+    get<Settings['audio']>('settings:audio'),
     get<string | null>('settings:activeDocId'),
   ])
   return {
@@ -43,6 +44,7 @@ export async function loadSettings(): Promise<Settings> {
     display: display ?? DEFAULT_SETTINGS.display,
     summary: summary ?? DEFAULT_SETTINGS.summary,
     prompts: prompts ?? DEFAULT_SETTINGS.prompts,
+    audio: audio ?? DEFAULT_SETTINGS.audio,
     activeDocId: activeDocId ?? null,
   }
 }
@@ -55,6 +57,7 @@ export async function saveSettings(s: Settings): Promise<void> {
     set('settings:display', s.display),
     set('settings:summary', s.summary),
     set('settings:prompts', s.prompts),
+    set('settings:audio', s.audio),
     set('settings:activeDocId', s.activeDocId),
   ])
 }

@@ -20,9 +20,8 @@ export function getSelectedIndex(): number {
 }
 
 // Layout (288px total):
-//   HUD:     y=0,   h=35  (1 line, p=4, b=0)
-//   Menu:    y=35,  h=216 (p=8, b=0)
-//   NavHint: y=251, h=37  (1 line, p=4, b=1)
+//   HUD:  y=0,  h=35  (1 line, p=4, b=0)
+//   Menu: y=35, h=253 (p=8, b=0 — full remaining height)
 
 function makeContainers(menuText: string) {
   const hud = new TextContainerProperty({
@@ -33,33 +32,26 @@ function makeContainers(menuText: string) {
   })
 
   const menu = new TextContainerProperty({
-    xPosition: 0, yPosition: 35, width: 576, height: 216,
+    xPosition: 0, yPosition: 35, width: 576, height: 253,
     borderWidth: 0, borderColor: 5, paddingLength: 8,
     containerID: 2, containerName: 'home-menu',
     content: menuText, isEventCapture: 1,
   })
 
-  const navHint = new TextContainerProperty({
-    xPosition: 0, yPosition: 251, width: 576, height: 37,
-    borderWidth: 1, borderColor: 3, paddingLength: 4,
-    containerID: 3, containerName: 'nav-hint',
-    content: '● start session  ○○ exit', isEventCapture: 0,
-  })
-
-  return [hud, menu, navHint]
+  return [hud, menu]
 }
 
 export async function renderHomeScreen(): Promise<void> {
   selectedIndex = 0
-  const [hud, menu, navHint] = makeContainers(buildMenuText())
+  const [hud, menu] = makeContainers(buildMenuText())
   await bridge.createStartUpPageContainer(
-    new CreateStartUpPageContainer({ containerTotalNum: 3, textObject: [hud, menu, navHint] }),
+    new CreateStartUpPageContainer({ containerTotalNum: 2, textObject: [hud, menu] }),
   )
 }
 
 export async function rebuildHomeScreen(): Promise<void> {
-  const [hud, menu, navHint] = makeContainers(buildMenuText())
-  const ok = await bridge.rebuildPageContainer(new RebuildPageContainer({ containerTotalNum: 3, textObject: [hud, menu, navHint] }))
+  const [hud, menu] = makeContainers(buildMenuText())
+  const ok = await bridge.rebuildPageContainer(new RebuildPageContainer({ containerTotalNum: 2, textObject: [hud, menu] }))
   console.log('[rebuildHomeScreen] result:', ok)
 }
 

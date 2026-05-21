@@ -62,12 +62,18 @@ export interface ShareOptions {
 }
 
 export function buildShareExport(session: Session, opts: ShareOptions): string {
-  const lines: string[] = [
-    '--- SMART MEETING SESSION EXPORT ---',
-    `Title: ${session.title}`,
-    `Date: ${new Date(session.date).toLocaleString()}`,
-    `Duration: ${formatDuration(session.duration)}`,
-  ]
+  const lines: string[] = []
+
+  if (opts.includePrompt && opts.sharePrompt) {
+    lines.push('--- INSTRUCTIONS FOR AI ASSISTANT ---')
+    lines.push(opts.sharePrompt)
+    lines.push('')
+  }
+
+  lines.push('--- SMART MEETING SESSION EXPORT ---')
+  lines.push(`Title: ${session.title}`)
+  lines.push(`Date: ${new Date(session.date).toLocaleString()}`)
+  lines.push(`Duration: ${formatDuration(session.duration)}`)
 
   if (opts.includeSummary && session.summary) {
     lines.push('\n--- SUMMARY ---')
@@ -84,11 +90,6 @@ export function buildShareExport(session: Session, opts: ShareOptions): string {
     lines.push(session.cues
       .map(c => `[${formatDuration(Math.floor((c.timestamp - session.date) / 1000))}] [${c.type}] ${c.text}`)
       .join('\n'))
-  }
-
-  if (opts.includePrompt && opts.sharePrompt) {
-    lines.push('\n--- INSTRUCTIONS FOR AI ASSISTANT ---')
-    lines.push(opts.sharePrompt)
   }
 
   return lines.join('\n')
