@@ -2,7 +2,7 @@
   "package_id": "com.smartmeeting.g2assistant",
   "edition": "202601",
   "name": "Smart Meeting",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "min_app_version": "2.0.0",
   "min_sdk_version": "0.0.10",
   "entrypoint": "index.html",
@@ -18,10 +18,6 @@
     {
       "name": "g2-microphone",
       "desc": "Captures audio from the G2 glasses microphone array for real-time transcription."
-    },
-    {
-      "name": "phone-microphone",
-      "desc": "Fallback microphone capture from the phone when glasses are not worn."
     }
   ],
   "supported_languages": ["en"]

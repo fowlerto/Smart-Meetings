@@ -197,10 +197,6 @@ export function renderPhoneHTML(): void {
               <div class="settings-label">${label}</div>
               <label class="toggle"><input type="checkbox" id="${id}" checked /><span class="toggle-slider"></span></label>
             </div>`).join('')}
-          <div class="settings-row">
-            <div><div class="settings-label">USE PHONE MICROPHONE</div><div class="settings-desc">Better room audio — captures ambient sound vs. G2 mic (optimized for your voice only)</div></div>
-            <label class="toggle"><input type="checkbox" id="audio-phone-mic" /><span class="toggle-slider"></span></label>
-          </div>
           <button class="save-settings-btn" id="save-settings-display-btn">Save Settings</button>
         </div>
 

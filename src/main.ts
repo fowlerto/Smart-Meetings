@@ -15,7 +15,6 @@ import {
 import { initCueOverlay, showCueOverlay, cueNavigatePrev, cueNavigateNext, dismissCueOverlay } from './glasses/cue.ts'
 import {
   initDeepgram, configureDeepgram, startStreaming, stopStreaming,
-  startPhoneMicStreaming, stopPhoneMicStreaming,
   sendAudioData, onDeepgramStatus,
 } from './audio/deepgram.ts'
 import {
@@ -206,16 +205,6 @@ function handleCueInput(type: OsEventTypeList | undefined) {
   }
 }
 
-// ── Audio helpers ─────────────────────────────────────────────────────────────
-
-function startAudio(cb: (text: string) => void): Promise<void> {
-  return settings.audio?.usePhoneMic ? startPhoneMicStreaming(cb) : startStreaming(cb)
-}
-
-function stopAudio(): Promise<void> {
-  return settings.audio?.usePhoneMic ? stopPhoneMicStreaming() : stopStreaming()
-}
-
 // ── Session lifecycle ─────────────────────────────────────────────────────────
 
 async function beginSession() {
@@ -263,7 +252,7 @@ async function beginSession() {
     return
   }
 
-  await startAudio((text: string) => {
+  await startStreaming((text: string) => {
     if (settings.display.liveTranscription) appendTranscript(text)
     phoneTranscript += text + '\n'
     appendSessionTranscript(text)
@@ -277,7 +266,7 @@ async function endSession() {
   stopCueDetector()
   stopStatusTimer()
   setTranscriptUpdates(true)
-  try { await stopAudio() } catch { /* ensure we always reach rebuildHomeScreen */ }
+  try { await stopStreaming() } catch { /* ensure we always reach rebuildHomeScreen */ }
   endMeetingConversation()
 
   if (sessionTimerInterval) { clearInterval(sessionTimerInterval); sessionTimerInterval = null }
@@ -604,6 +593,10 @@ async function saveSettingsFromForm() {
   settings = collectSettings(settings)
   await saveSettings(settings)
   applySettings()
+  if (glassesView === 'active-session') {
+    stopCueDetector()
+    startCueDetector()
+  }
   showToast('Settings saved')
 
   const nowHasKeys = !!(settings.keys.deepgramKey && settings.keys.anthropicKey)
@@ -697,7 +690,7 @@ function escapeHtml(text: string): string {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 async function onBackground() {
-  await stopAudio()
+  await stopStreaming()
   stopHudUpdates()
   stopCueDetector()
   stopStatusTimer()
@@ -707,7 +700,7 @@ async function onBackground() {
 async function onForeground() {
   startHudUpdates()
   if (glassesView === 'active-session') {
-    await startAudio((text: string) => {
+    await startStreaming((text: string) => {
       if (settings.display.liveTranscription) appendTranscript(text)
       phoneTranscript += text + '\n'
       appendSessionTranscript(text)
@@ -725,7 +718,7 @@ async function onExit() {
   endMeetingConversation()
   await flushSession()
   stopStatusTimer()
-  await stopAudio()
+  await stopStreaming()
   stopHudUpdates()
   stopCueDetector()
 }

@@ -63,9 +63,6 @@ export interface Settings {
   prompts: {
     sharePrompt: string
   }
-  audio: {
-    usePhoneMic: boolean
-  }
   activeDocId: string | null
 }
 
@@ -94,9 +91,6 @@ export const DEFAULT_SETTINGS: Settings = {
   prompts: {
     sharePrompt:
       'This export includes a meeting transcript and AI-generated cues. If an AI Cues section is present, incorporate relevant cues into your summary — wherever a cue influenced a point, mark it with * and add the cue type in square brackets, e.g. "The team discussed consensus algorithms* [concept]".\n\nPlease provide:\n1. A structured summary of the meeting\'s key topics, decisions, and outcomes\n2. Action items with owners (if mentioned)\n3. Any open questions not resolved\n4. The top 3–5 takeaways\n\nFormat as a clear brief suitable for sharing with meeting attendees.',
-  },
-  audio: {
-    usePhoneMic: false,
   },
   activeDocId: null,
 }

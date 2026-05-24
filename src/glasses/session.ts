@@ -26,8 +26,20 @@ export function resetSessionDisplay() {
   setSessionInfo(0, 0, true)
 }
 
+const LINE_WRAP_CHARS = 50
+
 export function appendTranscript(newText: string) {
-  transcriptLines.push(newText)
+  if (transcriptLines.length === 0) {
+    transcriptLines.push(newText)
+  } else {
+    const last = transcriptLines[transcriptLines.length - 1]
+    const endsWithSentence = /[.?!]$/.test(last.trimEnd())
+    if (endsWithSentence || last.length >= LINE_WRAP_CHARS) {
+      transcriptLines.push(newText)
+    } else {
+      transcriptLines[transcriptLines.length - 1] = last + ' ' + newText
+    }
+  }
   if (transcriptLines.length > MAX_LINES) transcriptLines.shift()
   if (!sendTranscriptUpdates) return
   const content = transcriptLines.join('\n')
